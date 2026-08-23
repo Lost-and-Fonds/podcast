@@ -39,10 +39,6 @@ final class PodcastBroadcast implements BroadcastPlugin
         if ($this->setting($request, 'media_kind', 'audio') !== 'audio') {
             return new Preparation();
         }
-        if ($request->staging === null || $request->helpers === null) {
-            throw new RuntimeException('Podcast audio preparation requires staging and the ffmpeg helper.');
-        }
-
         $artifacts = [];
         foreach ($request->items as $item) {
             if ($this->audioResource($item) !== null) {
@@ -51,6 +47,9 @@ final class PodcastBroadcast implements BroadcastPlugin
             $video = $this->resource($item, 'video');
             if ($video === null) {
                 continue;
+            }
+            if ($request->staging === null || $request->helpers === null) {
+                throw new RuntimeException('Podcast audio preparation requires staging and the ffmpeg helper.');
             }
 
             $name = 'derived-' . $this->safeId($item->id) . '.mp3';
