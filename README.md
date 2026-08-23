@@ -15,12 +15,12 @@ composer require stashd/podcast
 ```
 
 The package requires PHP 8.5, `stashd/plugin-sdk`, and FFmpeg available to the
-plugin runtime through the package helper. Run `./tests/run.sh` for local
+plugin runtime through the declared helper. Run `composer test` for local
 provider tests. The core application owns persistence, publication, activation,
 and lifecycle orchestration.
 
 ## Release artifact
 
-Run `tools/build-oci.sh out/plugin.oci` after installing production dependencies. The output is an OCI image layout; helper-bearing plugins require pinned executable payloads through `PLUGIN_HELPERS_DIR`.
-
-Helper release inputs are deliberate: set `PLUGIN_HELPERS_DIR` to a directory containing the pinned, checksum-verified helper executables before running `tools/build-oci.sh`. The build refuses missing helpers and never uses host PATH.
+`stashd-plugin/helpers.lock.json` pins the GPL FFmpeg payload for linux/amd64
+and linux/arm64. Core verifies and materializes that payload; host PATH is not
+used.

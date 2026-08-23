@@ -221,7 +221,8 @@ final class PodcastBroadcast implements BroadcastPlugin
     /** @param array<string, mixed> $settings */
     private function transcript(Item $item, array $settings): ?ItemResource
     {
-        $languages = array_filter(array_map('trim', explode(',', (string) ($settings['caption_languages'] ?? 'en'))));
+        $captionLanguages = $settings['caption_languages'] ?? 'en';
+        $languages = array_filter(array_map('trim', explode(',', is_string($captionLanguages) ? $captionLanguages : 'en')));
         foreach ($item->resources as $resource) {
             if ($resource->kind !== 'subtitle') {
                 continue;
@@ -245,6 +246,7 @@ final class PodcastBroadcast implements BroadcastPlugin
         if ($value === null || trim($value) === '') {
             return (new DateTimeImmutable())->format(DateTimeInterface::RFC2822);
         }
+
         try {
             return (new DateTimeImmutable($value))->format(DateTimeInterface::RFC2822);
         } catch (\Throwable) {
@@ -255,6 +257,7 @@ final class PodcastBroadcast implements BroadcastPlugin
     private function duration(int $seconds): string
     {
         $seconds = max(0, $seconds);
+
         return sprintf('%d:%02d:%02d', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60);
     }
 
