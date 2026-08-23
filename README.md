@@ -14,7 +14,7 @@ Install with Composer:
 composer require stashd/podcast
 ```
 
-The package requires PHP 8.5, `stashd/plugin-sdk`, and a package-provided
-FFmpeg helper available to the plugin runtime. Run `./tests/run.sh` for local
+The package requires PHP 8.5, `stashd/plugin-sdk`, and FFmpeg available to the
+plugin runtime through the package helper. Run `./tests/run.sh` for local
 provider tests. The core application owns persistence, publication, activation,
 and lifecycle orchestration.
