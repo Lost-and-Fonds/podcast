@@ -1,5 +1,5 @@
 # Podcast plugin instructions
 
-This repository is an M10 package skeleton. Do not add a fake provider or copy
-the historical Wasm implementation here. A future native implementation may
-depend on `stashd/plugin-sdk`, but must not depend on Stashd core.
+This repository owns the production Podcast Broadcast plugin. It depends on
+`stashd/plugin-sdk`, but must not depend on Stashd core or Wasmtime reference
+code. Run `./tests/run.sh` for the provider checks.

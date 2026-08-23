@@ -1,0 +1,33 @@
+{
+  "id": "podcast",
+  "broadcast_key": "podcast",
+  "name": "Podcast Broadcast",
+  "version": "0.2.0",
+  "application_runtime": "plugin",
+  "runtime": "php",
+  "api_version": "0.1",
+  "entrypoint": "stashd-plugin/plugin.php",
+  "supported_file_kinds": ["audio", "video"],
+  "output_path": "feed.xml",
+  "output_media_type": "application/rss+xml",
+  "supports_item_rebuild": true,
+  "prunes_after_publish": false,
+  "helpers": {"ffmpeg": {"executable": "helpers/ffmpeg"}},
+  "prepare_helper": "ffmpeg",
+  "ui_options": [
+    {"key": "title", "label": "Title", "type": "text", "required": true},
+    {"key": "description", "label": "Description", "type": "text"},
+    {"key": "author", "label": "Author", "type": "text"},
+    {"key": "language", "label": "Language", "type": "text", "default": "en"},
+    {"key": "explicit", "label": "Explicit", "type": "boolean", "default": false},
+    {"key": "complete", "label": "Complete", "type": "boolean", "default": false},
+    {"key": "captions", "label": "Captions", "type": "select", "default": "off", "choices": ["off", "creator_only", "creator_or_auto"]},
+    {"key": "caption_languages", "label": "Caption languages", "type": "text", "default": "en"},
+    {"key": "funding_url", "label": "Funding URL", "type": "text"},
+    {"key": "media_kind", "label": "Media kind", "type": "select", "default": "audio", "choices": ["audio", "video"]},
+    {"key": "link_url", "label": "Link URL", "type": "text"},
+    {"key": "image_url", "label": "Image URL", "type": "text"}
+  ],
+  "requires": {"php": ">=8.5", "extensions": ["xmlwriter"]},
+  "architectures": ["amd64", "arm64"]
+}
