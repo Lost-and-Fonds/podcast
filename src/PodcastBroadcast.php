@@ -40,14 +40,17 @@ final class PodcastBroadcast implements BroadcastPlugin
             return new Preparation();
         }
         $artifacts = [];
+
         foreach ($request->items as $item) {
             if ($this->audioResource($item) !== null) {
                 continue;
             }
             $video = $this->resource($item, 'video');
+
             if ($video === null) {
                 continue;
             }
+
             if ($request->staging === null || $request->helpers === null) {
                 throw new RuntimeException('Podcast audio preparation requires staging and the ffmpeg helper.');
             }
@@ -59,6 +62,7 @@ final class PodcastBroadcast implements BroadcastPlugin
                 '-codec:a', 'libmp3lame', '-b:a', '128k', '-ac', '2', '-ar', '44100',
                 '/staging/' . $name,
             ]);
+
             if ($result->exitCode !== 0) {
                 throw new RuntimeException('Podcast audio helper failed: ' . trim($result->stderr));
             }
@@ -104,6 +108,7 @@ final class PodcastBroadcast implements BroadcastPlugin
         $writer->startDocument('1.0', 'UTF-8');
         $writer->startElement('rss');
         $writer->writeAttribute('version', '2.0');
+
         foreach (['itunes' => self::ITUNES_NS, 'atom' => self::ATOM_NS, 'content' => self::CONTENT_NS, 'podcast' => self::PODCAST_NS] as $prefix => $uri) {
             $writer->writeAttribute('xmlns:' . $prefix, $uri);
         }
@@ -112,11 +117,13 @@ final class PodcastBroadcast implements BroadcastPlugin
         $this->element($writer, 'description', $this->text($settings, 'description') ?? '');
         $this->element($writer, 'language', $this->text($settings, 'language') ?? 'en');
         $publicationUrl = $this->text($settings, 'publication_url');
+
         if ($publicationUrl !== null && $publicationUrl !== '') {
             $writer->startElement('atom:link');
             $writer->writeAttribute('rel', 'self');
             $writer->writeAttribute('href', $publicationUrl);
             $writer->endElement();
+
             if (($link = $this->text($settings, 'link_url')) !== null && $link !== '') {
                 $this->element($writer, 'link', $link);
             }
@@ -126,6 +133,7 @@ final class PodcastBroadcast implements BroadcastPlugin
         $this->elementNs($writer, 'itunes', 'complete', $this->bool($settings, 'complete') ? 'Yes' : 'No');
         $this->elementNs($writer, 'itunes', 'author', $this->text($settings, 'author') ?? '');
         $this->elementNs($writer, 'itunes', 'explicit', $this->bool($settings, 'explicit') ? 'true' : 'false');
+
         if (($image = $this->text($settings, 'image_url')) !== null && $image !== '') {
             $writer->startElement('itunes:image');
             $writer->writeAttribute('href', $image);
@@ -133,9 +141,11 @@ final class PodcastBroadcast implements BroadcastPlugin
         }
         $this->elementNs($writer, 'podcast', 'medium', $this->text($settings, 'media_kind') === 'video' ? 'video' : 'podcast');
         $guid = $this->text($settings, 'podcast_guid') ?? $this->text($settings, 'guid');
+
         if ($guid !== null && $guid !== '') {
             $this->elementNs($writer, 'podcast', 'guid', $guid);
         }
+
         if (($funding = $this->text($settings, 'funding_url')) !== null && $funding !== '') {
             $writer->startElement('podcast:funding');
             $writer->writeAttribute('url', $funding);
@@ -145,6 +155,7 @@ final class PodcastBroadcast implements BroadcastPlugin
 
         foreach ($request->items as $item) {
             $resource = $this->selectedResource($item, $settings);
+
             if ($resource === null || $resource->url === null || $resource->url === '') {
                 continue;
             }
@@ -159,16 +170,20 @@ final class PodcastBroadcast implements BroadcastPlugin
             $writer->writeAttribute('length', (string) $resource->sizeBytes);
             $writer->writeAttribute('type', $resource->mediaType ?? ($settings['media_kind'] === 'video' ? 'video/mp4' : 'audio/mpeg'));
             $writer->endElement();
+
             if ($item->durationSeconds !== null) {
                 $this->elementNs($writer, 'itunes', 'duration', $this->duration($item->durationSeconds));
             }
+
             if (($itemImage = $this->resource($item, 'image'))?->url !== null) {
                 $writer->startElement('itunes:image');
                 $writer->writeAttribute('href', $itemImage->url);
                 $writer->endElement();
             }
+
             if ($this->captionsEnabled($settings)) {
                 $transcript = $this->transcript($item, $settings);
+
                 if ($transcript?->url !== null) {
                     $writer->startElement('podcast:transcript');
                     $writer->writeAttribute('url', $transcript->url);
@@ -198,6 +213,7 @@ final class PodcastBroadcast implements BroadcastPlugin
                 return $resource;
             }
         }
+
         foreach ($item->resources as $resource) {
             if ($resource->kind === 'audio' && $resource->derivationKey === self::AUDIO_DERIVATION) {
                 return $resource;
@@ -223,10 +239,12 @@ final class PodcastBroadcast implements BroadcastPlugin
     {
         $captionLanguages = $settings['caption_languages'] ?? 'en';
         $languages = array_filter(array_map('trim', explode(',', is_string($captionLanguages) ? $captionLanguages : 'en')));
+
         foreach ($item->resources as $resource) {
             if ($resource->kind !== 'subtitle') {
                 continue;
             }
+
             if ($languages === [] || $resource->reference === '' || str_contains(strtolower($resource->reference), strtolower((string) $languages[0]))) {
                 return $resource;
             }
@@ -270,6 +288,7 @@ final class PodcastBroadcast implements BroadcastPlugin
     private function settings(PublishRequest $request): array
     {
         $settings = ['media_kind' => 'audio', 'captions' => 'off', 'caption_languages' => 'en', 'complete' => false, 'explicit' => false];
+
         foreach ($request->settings as $setting) {
             $settings[$setting->key] = $setting->value->value;
         }
