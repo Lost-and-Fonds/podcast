@@ -1,0 +1,9 @@
+{
+  "name": "stashd/podcast",
+  "description": "Planned Podcast Broadcast plugin package for Stashd",
+  "type": "library",
+  "license": "MIT",
+  "require": {
+    "php": "^8.5"
+  }
+}
