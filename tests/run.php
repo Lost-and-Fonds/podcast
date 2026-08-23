@@ -77,7 +77,7 @@ podcastAssert($preparation->artifacts[0]->derivationKey === 'podcast-audio-v1', 
 podcastAssert(in_array('/staging/resources/video.mp4', $helper->arguments, true), 'helper input was not staged');
 podcastAssert(in_array('/staging/derived-episode-1.mp3', $helper->arguments, true), 'helper output was not staged');
 
-$publishedItem = new Sdk\Item('episode-1', 'A <title>', [$video, new Sdk\ItemResource('derived-episode-1.mp3', 'audio', 'podcast-audio-v1', 'https://media.test/episode-1.mp3', 'audio/mpeg', 42)], description: 'A description with ]]> safely embedded', publishedAt: '2026-08-23T12:34:56+00:00', durationSeconds: 3723);
+$publishedItem = new Sdk\Item('episode-1', 'A <title>', [$video, new Sdk\ItemResource('derived-episode-1.mp3', 'audio', 'podcast-audio-v1', 'https://media.test/episode-1.mp3', 'audio/mpeg', 42), new Sdk\ItemResource('captions-en.vtt', 'subtitle', url: 'https://media.test/episode-1.vtt', mediaType: 'text/vtt')], description: 'A description with ]]> safely embedded', publishedAt: '2026-08-23T12:34:56+00:00', durationSeconds: 3723);
 $publication = $plugin->publish(new Sdk\PublishRequest('broadcast-1', $request->settings, [], [$publishedItem], $staging, $helper));
 $xml = $staging->files['feed.xml'] ?? '';
 $parsed = simplexml_load_string($xml);
@@ -88,6 +88,7 @@ podcastAssert((string) $parsed->channel->item->enclosure['url'] === 'https://med
 podcastAssert((string) $parsed->channel->item->pubDate === 'Sun, 23 Aug 2026 12:34:56 +0000', 'publication date formatting changed');
 podcastAssert(str_contains($xml, '<![CDATA[A description with ]]]]><![CDATA[> safely embedded]]>'), 'CDATA terminator was not split safely');
 podcastAssert(str_contains($xml, 'xmlns:podcast="https://podcastindex.org/namespace/1.0"'), 'Podcast namespace is missing');
+podcastAssert(str_contains($xml, 'url="https://media.test/episode-1.vtt"'), 'transcript URL was not published');
 podcastAssert($publication->artifact->mediaType === 'application/rss+xml', 'feed media type changed');
 
 $audio = new Sdk\ItemResource('audio.mp3', 'audio', url: 'https://media.test/audio.mp3', mediaType: 'audio/mpeg', sizeBytes: 12);
