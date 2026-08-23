@@ -132,7 +132,8 @@ final class PodcastBroadcast implements BroadcastPlugin
             $writer->endElement();
         }
         $this->elementNs($writer, 'podcast', 'medium', $this->text($settings, 'media_kind') === 'video' ? 'video' : 'podcast');
-        if (($guid = $this->text($settings, 'podcast_guid')) !== null && $guid !== '') {
+        $guid = $this->text($settings, 'podcast_guid') ?? $this->text($settings, 'guid');
+        if ($guid !== null && $guid !== '') {
             $this->elementNs($writer, 'podcast', 'guid', $guid);
         }
         if (($funding = $this->text($settings, 'funding_url')) !== null && $funding !== '') {
