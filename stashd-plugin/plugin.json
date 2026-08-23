@@ -12,7 +12,7 @@
   "output_media_type": "application/rss+xml",
   "supports_item_rebuild": true,
   "prunes_after_publish": false,
-  "helpers": {"ffmpeg": {"executable": "helpers/ffmpeg"}},
+  "helpers": {"ffmpeg": {"executable": "stashd-plugin/helpers/ffmpeg"}},
   "prepare_helper": "ffmpeg",
   "ui_options": [
     {"key": "title", "label": "Title", "type": "text", "required": true},
