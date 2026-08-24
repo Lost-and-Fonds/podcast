@@ -5,7 +5,7 @@
   "license": "MIT",
   "require": {
     "php": "^8.5",
-    "stashd/plugin-sdk": "^0.2"
+    "stashd/php-sdk": "^0.2"
   },
   "require-dev": {"pestphp/pest": "^4.0", "phpstan/phpstan": "^2.2", "friendsofphp/php-cs-fixer": "^3.95", "squizlabs/php_codesniffer": "^4.0"},
   "autoload": {
@@ -14,7 +14,7 @@
     }
   },
   "scripts": {"test": "vendor/bin/pest", "test:static": "vendor/bin/phpstan analyse", "format": "vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php", "lint": ["composer dump-autoload --optimize --strict-psr --dry-run", "vendor/bin/php-cs-fixer check --allow-risky=yes --config=.php-cs-fixer.dist.php"]},
-  "repositories": [{"type": "vcs", "url": "https://github.com/Lost-and-Fonds/plugin-sdk.git"}, {"type": "vcs", "url": "https://github.com/Lost-and-Fonds/plugin-api.git"}],
+  "repositories": [{"type": "vcs", "url": "https://github.com/Lost-and-Fonds/stashd-php-sdk.git"}, {"type": "vcs", "url": "https://github.com/Lost-and-Fonds/plugin-api.git"}],
   "config": {"allow-plugins": {"pestphp/pest-plugin": true}},
   "extra": {
     "stashd-plugin": {
