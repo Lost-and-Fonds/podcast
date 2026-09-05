@@ -2,7 +2,7 @@
   "id": "podcast",
   "broadcast_key": "podcast",
   "name": "Podcast Broadcast",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "application_runtime": "plugin",
   "runtime": "php",
   "api_version": "0.1",
@@ -22,13 +22,17 @@
     {"key": "language", "label": "Language", "type": "text", "default": "en"},
     {"key": "explicit", "label": "Explicit", "type": "boolean", "default": false},
     {"key": "complete", "label": "Complete", "type": "boolean", "default": false},
+    {"key": "categories", "label": "Categories", "type": "text", "description": "Comma-separated Apple Podcasts categories"},
+    {"key": "podcast_type", "label": "Podcast type", "type": "select", "default": "episodic", "choices": ["episodic", "serial"]},
+    {"key": "podcast_guid", "label": "Podcast GUID", "type": "text", "description": "Stable identifier for this podcast"},
     {"key": "captions", "label": "Captions", "type": "select", "default": "off", "choices": ["off", "creator_only", "creator_or_auto"]},
     {"key": "caption_languages", "label": "Caption languages", "type": "text", "default": "en"},
     {"key": "funding_url", "label": "Funding URL", "type": "text"},
+    {"key": "funding_label", "label": "Funding label", "type": "text", "default": "Support this podcast"},
     {"key": "media_kind", "label": "Media kind", "type": "select", "default": "audio", "choices": ["audio", "video"]},
     {"key": "link_url", "label": "Link URL", "type": "text"},
     {"key": "image_url", "label": "Image URL", "type": "text"}
   ],
-  "requires": {"php": ">=8.5", "extensions": ["xmlwriter"]},
+  "requires": {"php": ">=8.5", "extensions": ["dom"]},
   "architectures": ["amd64", "arm64"]
 }
