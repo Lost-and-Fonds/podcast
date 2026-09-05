@@ -77,13 +77,13 @@ final class PodcastBroadcast implements BroadcastPlugin
             throw new RuntimeException('Podcast publication requires staging.');
         }
 
-        $settings = $this->settings($request);
-        $xml = (new PodcastFeedBuilder())->build($request, $settings);
+        $config = PodcastFeedConfig::fromRequest($request);
+        $xml = (new PodcastFeedBuilder())->build($request, $config);
         $artifact = $request->staging->write('feed.xml', $xml, 'application/rss+xml');
 
         return new Publication(
             new \Stashd\PluginSdk\Artifact($artifact->reference, $artifact->mediaType, $artifact->sizeBytes),
-            publishedMetadata: $this->text($settings, 'publication_url') === null ? [] : [new Setting('publication_url', \Stashd\PluginSdk\OptionValue::text($this->text($settings, 'publication_url')))],
+            publishedMetadata: $config->publicationUrl === null ? [] : [new Setting('publication_url', \Stashd\PluginSdk\OptionValue::text($config->publicationUrl->toString()))],
         );
     }
 
@@ -130,17 +130,6 @@ final class PodcastBroadcast implements BroadcastPlugin
         return trim((string) preg_replace('/[^A-Za-z0-9_-]+/', '_', $id), '_') ?: 'item';
     }
 
-    /** @return array<string, mixed> */
-    private function settings(PublishRequest $request): array
-    {
-        $settings = ['media_kind' => 'audio', 'captions' => 'off', 'caption_languages' => 'en', 'complete' => false, 'explicit' => false];
-
-        foreach ($request->settings as $setting) {
-            $settings[$setting->key] = $setting->value->value;
-        }
-
-        return $settings;
-    }
 
     private function setting(PublishRequest $request, string $key, string $default): string
     {
@@ -151,12 +140,6 @@ final class PodcastBroadcast implements BroadcastPlugin
         }
 
         return $default;
-    }
-
-    /** @param array<string, mixed> $settings */
-    private function text(array $settings, string $key): ?string
-    {
-        return isset($settings[$key]) && is_string($settings[$key]) ? $settings[$key] : null;
     }
 
 }

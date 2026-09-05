@@ -18,20 +18,19 @@ final class PodcastFeedBuilder
 
     private const PODCAST_NS = 'https://podcastindex.org/namespace/1.0';
 
-    /** @param array<string, mixed> $settings */
-    public function build(PublishRequest $request, array $settings): string
+    public function build(PublishRequest $request, PodcastFeedConfig $config): string
     {
         Writer::registerExtension('PodcastIndex');
 
         $feed = new Feed();
-        $title = $this->text($settings, 'title') ?? 'Stashd Podcast';
-        $description = $this->text($settings, 'description') ?: $title;
-        $publicationUrl = $this->text($settings, 'publication_url');
-        $siteUrl = $this->text($settings, 'link_url');
-        $image = $this->feedImage($request, $settings);
+        $title = $config->title;
+        $description = $config->description;
+        $publicationUrl = $config->publicationUrl?->toString();
+        $siteUrl = $config->linkUrl?->toString();
+        $image = $this->feedImage($request, $config);
 
         $feed->setTitle($title)->setDescription($description);
-        $feed->setLanguage($this->text($settings, 'language') ?? 'en');
+        $feed->setLanguage($config->language);
 
         if ($siteUrl !== null && $siteUrl !== '') {
             $feed->setLink($siteUrl);
@@ -45,34 +44,34 @@ final class PodcastFeedBuilder
             $feed->setImage(['uri' => $image, 'title' => $title, 'link' => $siteUrl ?: $publicationUrl]);
         }
 
-        $this->call($feed, 'setItunesExplicit', [$this->bool($settings, 'explicit')]);
+        $this->call($feed, 'setItunesExplicit', [$config->explicit]);
 
-        if (($author = $this->text($settings, 'author')) !== null && $author !== '') {
-            $this->call($feed, 'addItunesAuthor', [$author]);
+        if ($config->author !== null) {
+            $this->call($feed, 'addItunesAuthor', [$config->author]);
         }
 
-        if (($categories = $this->categories($settings)) !== []) {
-            $this->call($feed, 'setItunesCategories', [$categories]);
+        if ($config->categories !== []) {
+            $this->call($feed, 'setItunesCategories', [$config->categories]);
         }
 
-        if ($this->bool($settings, 'complete')) {
+        if ($config->complete) {
             $this->call($feed, 'setItunesComplete', [true]);
         }
-        $this->call($feed, 'setItunesType', [$this->text($settings, 'podcast_type') ?? 'episodic']);
+        $this->call($feed, 'setItunesType', [$config->podcastType]);
 
         if ($image !== null && $this->hasLiteralImageExtension($image)) {
             $this->call($feed, 'setItunesImage', [$image]);
         }
 
-        if (($guid = $this->text($settings, 'podcast_guid') ?? $this->text($settings, 'guid')) !== null && $guid !== '') {
-            $this->call($feed, 'setPodcastIndexGuid', [['value' => $guid]]);
+        if ($config->podcastGuid !== null) {
+            $this->call($feed, 'setPodcastIndexGuid', [['value' => $config->podcastGuid]]);
         }
-        $this->call($feed, 'setPodcastIndexMedium', [['value' => $this->text($settings, 'media_kind') === 'video' ? 'video' : 'podcast']]);
+        $this->call($feed, 'setPodcastIndexMedium', [['value' => $config->mediaKind === 'video' ? 'video' : 'podcast']]);
 
-        if (($fundingUrl = $this->text($settings, 'funding_url')) !== null && $fundingUrl !== '') {
+        if ($config->fundingUrl !== null) {
             $this->call($feed, 'addPodcastIndexFunding', [[
-                'url' => $fundingUrl,
-                'title' => $this->text($settings, 'funding_label') ?: 'Support this podcast',
+                'url' => $config->fundingUrl->toString(),
+                'title' => $config->fundingLabel,
             ]]);
         }
 
@@ -83,7 +82,7 @@ final class PodcastFeedBuilder
         $total = count($request->items);
 
         foreach ($request->items as $index => $item) {
-            $resource = $this->selectedResource($item, $settings);
+            $resource = $this->selectedResource($item, $config);
 
             if ($resource === null || $resource->url === null || $resource->url === '') {
                 continue;
@@ -100,7 +99,7 @@ final class PodcastFeedBuilder
             }
             $entry->setEnclosure([
                 'uri' => $resource->url,
-                'type' => $resource->mediaType ?? ($settings['media_kind'] === 'video' ? 'video/mp4' : 'audio/mpeg'),
+                'type' => $resource->mediaType ?? ($config->mediaKind === 'video' ? 'video/mp4' : 'audio/mpeg'),
                 'length' => $resource->sizeBytes,
             ]);
 
@@ -123,14 +122,14 @@ final class PodcastFeedBuilder
                 $this->call($entryPodcast, 'addPodcastIndexDetailedImage', [['href' => $itemImage->url, 'purpose' => 'icon']]);
             }
 
-            if ($this->captionsEnabled($settings)) {
-                $transcript = $this->transcript($item, $settings);
+            if ($config->captions !== 'off') {
+                $transcript = $this->transcript($item, $config);
 
                 if ($transcript?->url !== null && $transcript->url !== '') {
                     $this->call($entryPodcast, 'setPodcastIndexTranscript', [[
                         'url' => $transcript->url,
                         'type' => $transcript->mediaType ?? 'text/vtt',
-                        'language' => $this->captionLanguage($settings),
+                        'language' => $config->captionLanguages[0] ?? null,
                     ]]);
                 }
             }
@@ -140,13 +139,12 @@ final class PodcastFeedBuilder
 
         $xml = $feed->export('rss', true);
 
-        return $this->restoreRoutedImages($xml, $image, $request, $settings);
+        return $this->restoreRoutedImages($xml, $image, $request, $config);
     }
 
-    /** @param array<string, mixed> $settings */
-    private function feedImage(PublishRequest $request, array $settings): ?string
+    private function feedImage(PublishRequest $request, PodcastFeedConfig $config): ?string
     {
-        $image = $this->text($settings, 'image_url');
+        $image = $config->imageUrl?->toString();
 
         if ($image !== null && $image !== '') {
             return $image;
@@ -163,23 +161,12 @@ final class PodcastFeedBuilder
         return null;
     }
 
-    /** @param array<string, mixed> $settings
-     * @return list<string>
-     */
-    private function categories(array $settings): array
-    {
-        $value = $this->text($settings, 'categories') ?? '';
-
-        return array_values(array_filter(array_map('trim', explode(',', $value))));
-    }
-
     private function hasLiteralImageExtension(string $url): bool
     {
         return preg_match('/\.(?:jpg|png)$/i', $url) === 1;
     }
 
-    /** @param array<string, mixed> $settings */
-    private function restoreRoutedImages(string $xml, ?string $feedImage, PublishRequest $request, array $settings): string
+    private function restoreRoutedImages(string $xml, ?string $feedImage, PublishRequest $request, PodcastFeedConfig $config): string
     {
         $document = new DOMDocument();
         $document->loadXML($xml);
@@ -203,7 +190,7 @@ final class PodcastFeedBuilder
         $itemIndex = 0;
 
         foreach ($request->items as $item) {
-            $resource = $this->selectedResource($item, $settings);
+            $resource = $this->selectedResource($item, $config);
 
             if ($resource === null || $resource->url === null || $resource->url === '') {
                 continue;
@@ -229,10 +216,9 @@ final class PodcastFeedBuilder
         return $document->saveXML() ?: $xml;
     }
 
-    /** @param array<string, mixed> $settings */
-    private function selectedResource(Item $item, array $settings): ?ItemResource
+    private function selectedResource(Item $item, PodcastFeedConfig $config): ?ItemResource
     {
-        return ($settings['media_kind'] ?? 'audio') === 'video' ? $this->resource($item, 'video') : $this->audioResource($item);
+        return $config->mediaKind === 'video' ? $this->resource($item, 'video') : $this->audioResource($item);
     }
 
     private function audioResource(Item $item): ?ItemResource
@@ -263,33 +249,17 @@ final class PodcastFeedBuilder
         return null;
     }
 
-    /** @param array<string, mixed> $settings */
-    private function transcript(Item $item, array $settings): ?ItemResource
+    private function transcript(Item $item, PodcastFeedConfig $config): ?ItemResource
     {
-        $languages = array_filter(array_map('trim', explode(',', $this->text($settings, 'caption_languages') ?? 'en')));
+        $language = $config->captionLanguages === [] ? '' : $config->captionLanguages[0];
 
         foreach ($item->resources as $resource) {
-            if ($resource->kind === 'subtitle' && ($languages === [] || str_contains(strtolower($resource->reference), strtolower((string) $languages[0])))) {
+            if ($resource->kind === 'subtitle' && ($language === '' || str_contains(strtolower($resource->reference), strtolower($language)))) {
                 return $resource;
             }
         }
 
         return null;
-    }
-
-    /** @param array<string, mixed> $settings */
-    private function captionLanguage(array $settings): ?string
-    {
-        $parts = explode(',', $this->text($settings, 'caption_languages') ?? '');
-        $language = trim($parts[0]);
-
-        return $language === '' ? null : $language;
-    }
-
-    /** @param array<string, mixed> $settings */
-    private function captionsEnabled(array $settings): bool
-    {
-        return ($settings['captions'] ?? 'off') !== 'off';
     }
 
     private function date(?string $value): ?DateTimeImmutable
@@ -310,18 +280,6 @@ final class PodcastFeedBuilder
         $seconds = max(0, $seconds);
 
         return sprintf('%d:%02d:%02d', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60);
-    }
-
-    /** @param array<string, mixed> $settings */
-    private function text(array $settings, string $key): ?string
-    {
-        return isset($settings[$key]) && is_string($settings[$key]) ? $settings[$key] : null;
-    }
-
-    /** @param array<string, mixed> $settings */
-    private function bool(array $settings, string $key): bool
-    {
-        return filter_var($settings[$key] ?? false, FILTER_VALIDATE_BOOL) === true;
     }
 
     /** @param list<mixed> $arguments */

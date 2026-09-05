@@ -125,10 +125,34 @@ it('preserves the Podcast provider contract', function (): void {
     podcastAssert((string) ((($parsed->xpath('/rss/channel/item/itunes:duration') ?: [])[0] ?? '')) === '1:02:03', 'duration was not formatted correctly');
     podcastAssert($publication->artifact->mediaType === 'application/rss+xml', 'feed media type changed');
 
+    $fallbackStaging = new PodcastStaging();
+    $fallbackPublication = $plugin->publish(new Sdk\PublishRequest('broadcast-funding-fallback', [
+        new Sdk\Setting('title', Sdk\OptionValue::text('Fallback Funding Podcast')),
+        new Sdk\Setting('description', Sdk\OptionValue::text('Support the show at https://patreon.com/example.')),
+    ], [], [$item], $fallbackStaging));
+    $fallback = simplexml_load_string($fallbackStaging->files['feed.xml'] ?? '');
+    podcastAssert($fallback !== false, 'funding fallback feed XML is invalid');
+    $fallback->registerXPathNamespace('podcast', 'https://podcastindex.org/namespace/1.0');
+    podcastAssert((string) (($fallback->xpath('/rss/channel/podcast:funding/@url') ?: [])[0] ?? '') === 'https://patreon.com/example', 'funding URL was not detected from the description');
+    podcastAssert($fallbackPublication->artifact->mediaType === 'application/rss+xml', 'funding fallback feed publication failed');
+
+    $stashDefaults = \Podcast\PodcastFeedConfig::fromRequest(new Sdk\PublishRequest('stash-defaults', [
+        new Sdk\Setting('broadcast_name', Sdk\OptionValue::text('Oculus Imperia Podcast')),
+        new Sdk\Setting('stash_description', Sdk\OptionValue::text('Preserved episodes')),
+    ]));
+    podcastAssert($stashDefaults->title === 'Oculus Imperia Podcast' && $stashDefaults->description === 'Preserved episodes', 'stash metadata was not used for podcast defaults');
+
+    try {
+        \Podcast\PodcastFeedConfig::fromRequest(new Sdk\PublishRequest('missing-title'));
+        podcastAssert(false, 'missing podcast title was accepted');
+    } catch (\InvalidArgumentException) {
+        podcastAssert(true, 'missing podcast title was rejected');
+    }
+
     $audio = new Sdk\ItemResource('audio.mp3', 'audio', url: 'https://media.test/audio.mp3', mediaType: 'audio/mpeg', sizeBytes: 12);
     $videoRequest = new Sdk\PublishRequest('broadcast-2', [new Sdk\Setting('media_kind', Sdk\OptionValue::text('video'))], [], [new Sdk\Item('episode-2', 'Video', [$video])], $staging);
     podcastAssert(count($plugin->prepare($videoRequest)->artifacts) === 0, 'video mode attempted derivation');
-    $audioPublication = $plugin->publish(new Sdk\PublishRequest('broadcast-3', [], [], [new Sdk\Item('episode-3', 'Audio', [$audio, $video])], $staging));
+    $audioPublication = $plugin->publish(new Sdk\PublishRequest('broadcast-3', [new Sdk\Setting('title', Sdk\OptionValue::text('Audio Podcast'))], [], [new Sdk\Item('episode-3', 'Audio', [$audio, $video])], $staging));
     podcastAssert($audioPublication->artifact->mediaType === 'application/rss+xml', 'audio feed publication failed');
 
     $completeStaging = new PodcastStaging();
