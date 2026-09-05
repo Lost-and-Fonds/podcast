@@ -52,7 +52,7 @@ it('preserves the Podcast provider contract', function (): void {
         /** @var list<string> */
         public array $arguments = [];
 
-        public function run(string $name, array $arguments = []): Sdk\HelperResult
+        public function run(string $name, array $arguments = [], ?callable $onOutput = null): Sdk\HelperResult
         {
             podcastAssert($name === 'ffmpeg', 'unexpected helper name');
             $this->arguments = $arguments;
@@ -61,9 +61,21 @@ it('preserves the Podcast provider contract', function (): void {
         }
     }
 
+    final class PodcastProgress implements Sdk\ProgressReporter
+    {
+        /** @var list<array{stage: string, fraction: ?float}> */
+        public array $events = [];
+
+        public function report(string $stage, ?float $fraction = null): void
+        {
+            $this->events[] = ['stage' => $stage, 'fraction' => $fraction];
+        }
+    }
+
     $plugin = new PodcastBroadcast();
     $staging = new PodcastStaging();
     $helper = new PodcastHelper();
+    $progress = new PodcastProgress();
     $video = new Sdk\ItemResource('resources/video.mp4', 'video', url: 'https://media.test/video.mp4', mediaType: 'video/mp4', sizeBytes: 100);
     $item = new Sdk\Item('episode-1', 'A <title>', [$video], description: 'A description with ]]> safely embedded', publishedAt: '2026-08-23T12:34:56+00:00', durationSeconds: 3723);
     $request = new Sdk\PublishRequest('broadcast-1', [
@@ -72,13 +84,14 @@ it('preserves the Podcast provider contract', function (): void {
         new Sdk\Setting('author', Sdk\OptionValue::text('Author')),
         new Sdk\Setting('publication_url', Sdk\OptionValue::text('https://media.test/feed.xml')),
         new Sdk\Setting('captions', Sdk\OptionValue::text('creator_only')),
-    ], [], [$item], $staging, $helper);
+    ], [], [$item], $staging, $helper, $progress);
 
     $preparation = $plugin->prepare($request);
     podcastAssert(count($preparation->artifacts) === 1, 'video-only audio item was not prepared');
     podcastAssert($preparation->artifacts[0]->derivationKey === 'podcast-audio-v1', 'derivation key changed');
     podcastAssert(in_array('/staging/resources/video.mp4', $helper->arguments, true), 'helper input was not staged');
     podcastAssert(in_array('/staging/derived-episode-1.mp3', $helper->arguments, true), 'helper output was not staged');
+    podcastAssert($progress->events[0]['fraction'] === 0.0 && $progress->events[1]['fraction'] === 0.5, 'item progress was not reported');
 
     $publishedItem = new Sdk\Item('episode-1', 'A <title>', [$video, new Sdk\ItemResource('derived-episode-1.mp3', 'audio', 'podcast-audio-v1', 'https://media.test/episode-1.mp3', 'audio/mpeg', 42), new Sdk\ItemResource('captions-en.vtt', 'subtitle', url: 'https://media.test/episode-1.vtt', mediaType: 'text/vtt')], description: 'A description with ]]> safely embedded', publishedAt: '2026-08-23T12:34:56+00:00', durationSeconds: 3723);
     $publication = $plugin->publish(new Sdk\PublishRequest('broadcast-1', $request->settings, [], [$publishedItem], $staging, $helper));

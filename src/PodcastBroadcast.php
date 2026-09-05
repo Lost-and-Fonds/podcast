@@ -41,13 +41,21 @@ final class PodcastBroadcast implements BroadcastPlugin
         }
         $artifacts = [];
 
-        foreach ($request->items as $item) {
+        $total = count($request->items);
+
+        foreach ($request->items as $index => $item) {
+            $request->progress?->report(sprintf('Preparing item %d of %d: %s', $index + 1, $total, $item->title), $total > 0 ? $index / $total * 0.5 : 0.0);
+
             if ($this->audioResource($item) !== null) {
+                $request->progress?->report(sprintf('Prepared item %d of %d: %s', $index + 1, $total, $item->title), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
+
                 continue;
             }
             $video = $this->resource($item, 'video');
 
             if ($video === null) {
+                $request->progress?->report(sprintf('Prepared item %d of %d: %s', $index + 1, $total, $item->title), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
+
                 continue;
             }
 
@@ -69,6 +77,7 @@ final class PodcastBroadcast implements BroadcastPlugin
 
             $staged = $request->staging->stage($name, 'audio/mpeg');
             $artifacts[] = new DerivedArtifact($item->id, $name, $video->reference, self::AUDIO_DERIVATION, 'audio', 'audio/mpeg', $staged->sizeBytes);
+            $request->progress?->report(sprintf('Prepared item %d of %d: %s', $index + 1, $total, $item->title), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
         }
 
         return new Preparation($artifacts);
@@ -153,7 +162,11 @@ final class PodcastBroadcast implements BroadcastPlugin
             $writer->endElement();
         }
 
-        foreach ($request->items as $item) {
+        $total = count($request->items);
+        $publishOffset = $this->setting($request, 'media_kind', 'audio') === 'audio' ? 0.5 : 0.0;
+
+        foreach ($request->items as $index => $item) {
+            $request->progress?->report(sprintf('Publishing item %d of %d: %s', $index + 1, $total, $item->title), $publishOffset + ($total > 0 ? $index / $total * (1.0 - $publishOffset) : 0.0));
             $resource = $this->selectedResource($item, $settings);
 
             if ($resource === null || $resource->url === null || $resource->url === '') {
@@ -175,7 +188,9 @@ final class PodcastBroadcast implements BroadcastPlugin
                 $this->elementNs($writer, 'itunes', 'duration', $this->duration($item->durationSeconds));
             }
 
-            if (($itemImage = $this->resource($item, 'image'))?->url !== null) {
+            $itemImage = $this->resource($item, 'image');
+
+            if ($itemImage !== null && $itemImage->url !== null) {
                 $writer->startElement('itunes:image');
                 $writer->writeAttribute('href', $itemImage->url);
                 $writer->endElement();
@@ -192,6 +207,7 @@ final class PodcastBroadcast implements BroadcastPlugin
                 }
             }
             $writer->endElement();
+            $request->progress?->report(sprintf('Published item %d of %d: %s', $index + 1, $total, $item->title), $publishOffset + ($total > 0 ? ($index + 1) / $total * (1.0 - $publishOffset) : 1.0 - $publishOffset));
         }
         $writer->endElement();
         $writer->endElement();
