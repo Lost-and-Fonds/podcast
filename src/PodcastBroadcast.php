@@ -143,7 +143,21 @@ final class PodcastBroadcast implements BroadcastPlugin
         $this->elementNs($writer, 'itunes', 'author', $this->text($settings, 'author') ?? '');
         $this->elementNs($writer, 'itunes', 'explicit', $this->bool($settings, 'explicit') ? 'true' : 'false');
 
-        if (($image = $this->text($settings, 'image_url')) !== null && $image !== '') {
+        $image = $this->text($settings, 'image_url');
+
+        if ($image === null || $image === '') {
+            foreach ($request->items as $item) {
+                $itemImage = $this->resource($item, 'image');
+
+                if ($itemImage?->url !== null && $itemImage->url !== '') {
+                    $image = $itemImage->url;
+
+                    break;
+                }
+            }
+        }
+
+        if ($image !== null && $image !== '') {
             $writer->startElement('itunes:image');
             $writer->writeAttribute('href', $image);
             $writer->endElement();
