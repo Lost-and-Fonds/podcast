@@ -2,7 +2,7 @@
   "id": "podcast",
   "broadcast_key": "podcast",
   "name": "Podcast Broadcast",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "application_runtime": "plugin",
   "runtime": "php",
   "api_version": "0.1",

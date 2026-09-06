@@ -80,6 +80,7 @@ final class PodcastFeedBuilder
         }
 
         $total = count($request->items);
+        $request->progress?->report(sprintf('Publishing feed · 0 of %d', $total), 0.5);
 
         foreach ($request->items as $index => $item) {
             $resource = $this->selectedResource($item, $config);
@@ -134,7 +135,7 @@ final class PodcastFeedBuilder
                 }
             }
             $feed->addEntry($entry);
-            $request->progress?->report(sprintf('Published item %d of %d: %s', $index + 1, $total, $item->title), 0.5 + ($total > 0 ? ($index + 1) / $total * 0.5 : 0.5));
+            $request->progress?->report(sprintf('Publishing feed · %d of %d', $index + 1, $total), 0.5 + ($total > 0 ? ($index + 1) / $total * 0.5 : 0.5));
         }
 
         $xml = $feed->export('rss', true);

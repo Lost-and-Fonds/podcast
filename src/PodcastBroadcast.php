@@ -32,17 +32,17 @@ final class PodcastBroadcast implements BroadcastPlugin
         $total = count($request->items);
 
         foreach ($request->items as $index => $item) {
-            $request->progress?->report(sprintf('Preparing item %d of %d: %s', $index + 1, $total, $item->title), $total > 0 ? $index / $total * 0.5 : 0.0);
+            $request->progress?->report(sprintf('Preparing media · %d of %d', $index, $total), $total > 0 ? $index / $total * 0.5 : 0.0);
 
             if ($this->audioResource($item) !== null) {
-                $request->progress?->report(sprintf('Prepared item %d of %d: %s', $index + 1, $total, $item->title), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
+                $request->progress?->report(sprintf('Preparing media · %d of %d', $index + 1, $total), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
 
                 continue;
             }
             $video = $this->resource($item, 'video');
 
             if ($video === null) {
-                $request->progress?->report(sprintf('Prepared item %d of %d: %s', $index + 1, $total, $item->title), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
+                $request->progress?->report(sprintf('Preparing media · %d of %d', $index + 1, $total), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
 
                 continue;
             }
@@ -65,7 +65,7 @@ final class PodcastBroadcast implements BroadcastPlugin
 
             $staged = $request->staging->stage($name, 'audio/mpeg');
             $artifacts[] = new DerivedArtifact($item->id, $name, $video->reference, self::AUDIO_DERIVATION, 'audio', 'audio/mpeg', $staged->sizeBytes);
-            $request->progress?->report(sprintf('Prepared item %d of %d: %s', $index + 1, $total, $item->title), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
+            $request->progress?->report(sprintf('Preparing media · %d of %d', $index + 1, $total), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
         }
 
         return new Preparation($artifacts);
