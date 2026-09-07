@@ -11,6 +11,7 @@ use Laminas\Feed\Writer\Writer;
 use Stashd\PluginSdk\Item;
 use Stashd\PluginSdk\ItemResource;
 use Stashd\PluginSdk\PublishRequest;
+use Stashd\PluginSdk\ProgressReporter;
 
 final class PodcastFeedBuilder
 {
@@ -18,7 +19,7 @@ final class PodcastFeedBuilder
 
     private const PODCAST_NS = 'https://podcastindex.org/namespace/1.0';
 
-    public function build(PublishRequest $request, PodcastFeedConfig $config): string
+    public function build(PublishRequest $request, PodcastFeedConfig $config, ProgressReporter $progress): string
     {
         Writer::registerExtension('PodcastIndex');
 
@@ -80,7 +81,7 @@ final class PodcastFeedBuilder
         }
 
         $total = count($request->items);
-        $request->progress?->report(sprintf('Publishing feed · 0 of %d', $total), 0.5);
+        $progress->report(sprintf('Publishing feed · 0 of %d', $total), 0.5);
 
         foreach ($request->items as $index => $item) {
             $resource = $this->selectedResource($item, $config);
@@ -135,7 +136,7 @@ final class PodcastFeedBuilder
                 }
             }
             $feed->addEntry($entry);
-            $request->progress?->report(sprintf('Publishing feed · %d of %d', $index + 1, $total), 0.5 + ($total > 0 ? ($index + 1) / $total * 0.5 : 0.5));
+            $progress->report(sprintf('Publishing feed · %d of %d', $index + 1, $total), 0.5 + ($total > 0 ? ($index + 1) / $total * 0.5 : 0.5));
         }
 
         $xml = $feed->export('rss', true);

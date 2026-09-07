@@ -22,7 +22,7 @@ final class PodcastBroadcast implements BroadcastPlugin
 {
     private const AUDIO_DERIVATION = 'podcast-audio-v1';
 
-    public function prepare(PublishRequest $request): Preparation
+    public function prepare(PublishRequest $request, PluginContext $context): Preparation
     {
         if ($this->setting($request, 'media_kind', 'audio') !== 'audio') {
             return new Preparation();
@@ -32,27 +32,27 @@ final class PodcastBroadcast implements BroadcastPlugin
         $total = count($request->items);
 
         foreach ($request->items as $index => $item) {
-            $request->progress?->report(sprintf('Preparing media · %d of %d', $index, $total), $total > 0 ? $index / $total * 0.5 : 0.0);
+            $context->progress->report(sprintf('Preparing media · %d of %d', $index, $total), $total > 0 ? $index / $total * 0.5 : 0.0);
 
             if ($this->audioResource($item) !== null) {
-                $request->progress?->report(sprintf('Preparing media · %d of %d', $index + 1, $total), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
+                $context->progress->report(sprintf('Preparing media · %d of %d', $index + 1, $total), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
 
                 continue;
             }
             $video = $this->resource($item, 'video');
 
             if ($video === null) {
-                $request->progress?->report(sprintf('Preparing media · %d of %d', $index + 1, $total), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
+                $context->progress->report(sprintf('Preparing media · %d of %d', $index + 1, $total), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
 
                 continue;
             }
 
-            if ($request->staging === null || $request->helpers === null) {
+            if ($context->staging === null || $context->helpers === null) {
                 throw new RuntimeException('Podcast audio preparation requires staging and the ffmpeg helper.');
             }
 
             $name = 'derived-' . $this->safeId($item->id) . '.mp3';
-            $result = $request->helpers->run('ffmpeg', [
+            $result = $context->helpers->run('ffmpeg', [
                 '-nostdin', '-y', '-i', '/staging/' . $video->reference,
                 '-vn', '-map_metadata', '0', '-map_chapters', '0',
                 '-codec:a', 'libmp3lame', '-b:a', '128k', '-ac', '2', '-ar', '44100',
@@ -63,23 +63,23 @@ final class PodcastBroadcast implements BroadcastPlugin
                 throw new RuntimeException('Podcast audio helper failed: ' . trim($result->stderr));
             }
 
-            $staged = $request->staging->stage($name, 'audio/mpeg');
+            $staged = $context->staging->stage($name, 'audio/mpeg');
             $artifacts[] = new DerivedArtifact($item->id, $name, $video->reference, self::AUDIO_DERIVATION, 'audio', 'audio/mpeg', $staged->sizeBytes);
-            $request->progress?->report(sprintf('Preparing media · %d of %d', $index + 1, $total), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
+            $context->progress->report(sprintf('Preparing media · %d of %d', $index + 1, $total), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
         }
 
         return new Preparation($artifacts);
     }
 
-    public function publish(PublishRequest $request): Publication
+    public function publish(PublishRequest $request, PluginContext $context): Publication
     {
-        if ($request->staging === null) {
+        if ($context->staging === null) {
             throw new RuntimeException('Podcast publication requires staging.');
         }
 
         $config = PodcastFeedConfig::fromRequest($request);
-        $xml = (new PodcastFeedBuilder())->build($request, $config);
-        $artifact = $request->staging->write('feed.xml', $xml, 'application/rss+xml');
+        $xml = (new PodcastFeedBuilder())->build($request, $config, $context->progress);
+        $artifact = $context->staging->write('feed.xml', $xml, 'application/rss+xml');
 
         return new Publication(
             new \Stashd\PluginSdk\Artifact($artifact->reference, $artifact->mediaType, $artifact->sizeBytes),

@@ -89,9 +89,10 @@ it('preserves the Podcast provider contract', function (): void {
         new Sdk\Setting('podcast_guid', Sdk\OptionValue::text('podcast-guid-1')),
         new Sdk\Setting('funding_url', Sdk\OptionValue::text('https://media.test/support')),
         new Sdk\Setting('funding_label', Sdk\OptionValue::text('Support the archive')),
-    ], [], [$item], $staging, $helper, $progress);
+    ], [], [$item]);
+    $context = new Sdk\PluginContext(progress: $progress, staging: $staging, helpers: $helper);
 
-    $preparation = $plugin->prepare($request);
+    $preparation = $plugin->prepare($request, $context);
     podcastAssert(count($preparation->artifacts) === 1, 'video-only audio item was not prepared');
     podcastAssert($preparation->artifacts[0]->derivationKey === 'podcast-audio-v1', 'derivation key changed');
     podcastAssert(in_array('/staging/resources/video.mp4', $helper->arguments, true), 'helper input was not staged');
@@ -99,7 +100,7 @@ it('preserves the Podcast provider contract', function (): void {
     podcastAssert($progress->events[0]['fraction'] === 0.0 && $progress->events[1]['fraction'] === 0.5, 'item progress was not reported');
 
     $publishedItem = new Sdk\Item('episode-1', 'A <title>', [$video, $image, new Sdk\ItemResource('derived-episode-1.mp3', 'audio', 'podcast-audio-v1', 'https://media.test/episode-1.mp3', 'audio/mpeg', 42), new Sdk\ItemResource('captions-en.vtt', 'subtitle', url: 'https://media.test/episode-1.vtt', mediaType: 'text/vtt')], description: 'A description with ]]> safely embedded', publishedAt: '2026-08-23T12:34:56+00:00', durationSeconds: 3723);
-    $publication = $plugin->publish(new Sdk\PublishRequest('broadcast-1', $request->settings, [], [$publishedItem], $staging, $helper));
+    $publication = $plugin->publish(new Sdk\PublishRequest('broadcast-1', $request->settings, [], [$publishedItem]), $context);
     $xml = $staging->files['feed.xml'] ?? '';
     $parsed = simplexml_load_string($xml);
     podcastAssert($parsed !== false, 'feed XML is not well formed');
@@ -129,7 +130,7 @@ it('preserves the Podcast provider contract', function (): void {
     $fallbackPublication = $plugin->publish(new Sdk\PublishRequest('broadcast-funding-fallback', [
         new Sdk\Setting('title', Sdk\OptionValue::text('Fallback Funding Podcast')),
         new Sdk\Setting('description', Sdk\OptionValue::text('Support the show at https://patreon.com/example.')),
-    ], [], [$item], $fallbackStaging));
+    ], [], [$item]), new Sdk\PluginContext(staging: $fallbackStaging));
     $fallback = simplexml_load_string($fallbackStaging->files['feed.xml'] ?? '');
     podcastAssert($fallback !== false, 'funding fallback feed XML is invalid');
     $fallback->registerXPathNamespace('podcast', 'https://podcastindex.org/namespace/1.0');
@@ -150,9 +151,9 @@ it('preserves the Podcast provider contract', function (): void {
     }
 
     $audio = new Sdk\ItemResource('audio.mp3', 'audio', url: 'https://media.test/audio.mp3', mediaType: 'audio/mpeg', sizeBytes: 12);
-    $videoRequest = new Sdk\PublishRequest('broadcast-2', [new Sdk\Setting('media_kind', Sdk\OptionValue::text('video'))], [], [new Sdk\Item('episode-2', 'Video', [$video])], $staging);
-    podcastAssert(count($plugin->prepare($videoRequest)->artifacts) === 0, 'video mode attempted derivation');
-    $audioPublication = $plugin->publish(new Sdk\PublishRequest('broadcast-3', [new Sdk\Setting('title', Sdk\OptionValue::text('Audio Podcast'))], [], [new Sdk\Item('episode-3', 'Audio', [$audio, $video])], $staging));
+    $videoRequest = new Sdk\PublishRequest('broadcast-2', [new Sdk\Setting('media_kind', Sdk\OptionValue::text('video'))], [], [new Sdk\Item('episode-2', 'Video', [$video])]);
+    podcastAssert(count($plugin->prepare($videoRequest, $context)->artifacts) === 0, 'video mode attempted derivation');
+    $audioPublication = $plugin->publish(new Sdk\PublishRequest('broadcast-3', [new Sdk\Setting('title', Sdk\OptionValue::text('Audio Podcast'))], [], [new Sdk\Item('episode-3', 'Audio', [$audio, $video])]), $context);
     podcastAssert($audioPublication->artifact->mediaType === 'application/rss+xml', 'audio feed publication failed');
 
     $completeStaging = new PodcastStaging();
@@ -160,7 +161,7 @@ it('preserves the Podcast provider contract', function (): void {
         new Sdk\Setting('title', Sdk\OptionValue::text('Finished Podcast')),
         new Sdk\Setting('complete', Sdk\OptionValue::boolean(true)),
         new Sdk\Setting('media_kind', Sdk\OptionValue::text('video')),
-    ], [], [new Sdk\Item('episode-4', 'Video', [$video])], $completeStaging));
+    ], [], [new Sdk\Item('episode-4', 'Video', [$video])]), new Sdk\PluginContext(staging: $completeStaging));
     $completeXml = $completeStaging->files['feed.xml'] ?? '';
     $complete = simplexml_load_string($completeXml);
     podcastAssert($complete !== false, 'completed feed XML is invalid');

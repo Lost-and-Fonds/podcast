@@ -5,7 +5,7 @@
   "version": "0.3.4",
   "application_runtime": "plugin",
   "runtime": "php",
-  "api_version": "0.1",
+  "api_version": "0.2",
   "entrypoint": "stashd-plugin/plugin.php",
   "helpers_lock": "stashd-plugin/helpers.lock.json",
   "supported_file_kinds": ["audio", "video"],
