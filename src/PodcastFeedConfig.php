@@ -65,7 +65,7 @@ final readonly class PodcastFeedConfig
             mediaKind: self::text($values, 'media_kind') === 'video' ? 'video' : 'audio',
             captions: self::text($values, 'captions') ?? 'off',
             captionLanguages: self::csv($values, 'caption_languages'),
-            fundingUrl: self::url(self::text($values, 'funding_url')) ?? self::fundingUrl(self::text($values, 'description')),
+            fundingUrl: self::url(self::text($values, 'funding_url')) ?? self::fundingUrlFromText(self::text($values, 'description')),
             fundingLabel: self::text($values, 'funding_label') ?: 'Support this podcast',
             linkUrl: self::url(self::text($values, 'link_url')),
             publicationUrl: self::url(self::text($values, 'publication_url')),
@@ -93,7 +93,7 @@ final readonly class PodcastFeedConfig
         return filter_var($values[$key] ?? false, FILTER_VALIDATE_BOOL) === true;
     }
 
-    private static function fundingUrl(?string $description): ?Uri
+    public static function fundingUrlFromText(?string $description): ?Uri
     {
         if ($description === null) {
             return null;

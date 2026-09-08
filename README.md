@@ -5,8 +5,10 @@ Atom, content, and Podcasting 2.0 metadata from Vault media.
 
 Audio mode prefers original audio and derives MP3 from video through the
 declared package helper when needed. Video mode publishes the video resource
-directly. Captions can be published as Podcasting 2.0 transcript entries, and
-`funding_url` is emitted as `podcast:funding` when configured.
+directly. Matching captions are converted into durable plain-text transcript
+artifacts and exposed through Podcasting 2.0. `funding_url` is emitted as
+`podcast:funding`, with a supported funding link in feed or episode text as a
+fallback.
 
 Production installation uses Stashd's OCI installer (`stashd:plugin-install
 ghcr.io/lost-and-fonds/podcast:<version>`). Composer is for local development

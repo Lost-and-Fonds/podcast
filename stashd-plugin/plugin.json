@@ -25,7 +25,7 @@
     {"key": "categories", "label": "Categories", "type": "text", "description": "Comma-separated Apple Podcasts categories"},
     {"key": "podcast_type", "label": "Podcast type", "type": "select", "default": "episodic", "choices": ["episodic", "serial"]},
     {"key": "podcast_guid", "label": "Podcast GUID", "type": "text", "description": "Stable identifier for this podcast"},
-    {"key": "captions", "label": "Captions", "type": "select", "default": "off", "choices": ["off", "creator_only", "creator_or_auto"]},
+    {"key": "captions", "label": "Captions", "type": "select", "default": "off", "choices": ["off", "creator_only", "creator_or_auto"], "description": "Convert matching Vault captions into plain-text podcast transcripts"},
     {"key": "caption_languages", "label": "Caption languages", "type": "text", "default": "en"},
     {"key": "funding_url", "label": "Funding URL", "type": "text"},
     {"key": "funding_label", "label": "Funding label", "type": "text", "default": "Support this podcast"},

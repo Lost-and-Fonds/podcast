@@ -22,17 +22,26 @@ final class PodcastBroadcast implements BroadcastPlugin
 {
     private const AUDIO_DERIVATION = 'podcast-audio-v1';
 
+    private const TRANSCRIPT_DERIVATION = 'podcast-transcript-v1';
+
     public function prepare(PublishRequest $request, PluginContext $context): Preparation
     {
-        if ($this->setting($request, 'media_kind', 'audio') !== 'audio') {
-            return new Preparation();
-        }
         $artifacts = [];
-
         $total = count($request->items);
+        $captions = $this->setting($request, 'captions', 'off');
+        $captionLanguage = $this->captionLanguage($request);
+        $mediaKind = $this->setting($request, 'media_kind', 'audio');
 
         foreach ($request->items as $index => $item) {
             $context->progress->report(sprintf('Preparing media · %d of %d', $index, $total), $total > 0 ? $index / $total * 0.5 : 0.0);
+
+            $this->prepareTranscript($item, $captions, $captionLanguage, $context, $artifacts);
+
+            if ($mediaKind !== 'audio') {
+                $context->progress->report(sprintf('Preparing media · %d of %d', $index + 1, $total), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
+
+                continue;
+            }
 
             if ($this->audioResource($item) !== null) {
                 $context->progress->report(sprintf('Preparing media · %d of %d', $index + 1, $total), $total > 0 ? ($index + 1) / $total * 0.5 : 0.5);
@@ -125,11 +134,64 @@ final class PodcastBroadcast implements BroadcastPlugin
         return null;
     }
 
+    /** @param list<DerivedArtifact> $artifacts */
+    private function prepareTranscript(Item $item, string $captions, string $captionLanguage, PluginContext $context, array &$artifacts): void
+    {
+        if ($captions === 'off' || $context->staging === null) {
+            return;
+        }
+
+        $subtitle = $this->subtitleResource($item, $captionLanguage);
+
+        if ($subtitle === null) {
+            return;
+        }
+
+        $captions = @file_get_contents('/staging/' . $subtitle->reference);
+
+        if (! is_string($captions)) {
+            return;
+        }
+
+        $transcript = (new PodcastTranscriptFormatter())->format($captions);
+
+        if ($transcript === '') {
+            return;
+        }
+
+        $name = 'transcript-' . $this->safeId($item->id) . '.txt';
+        $staged = $context->staging->write($name, $transcript, 'text/plain');
+        $artifacts[] = new DerivedArtifact(
+            $item->id,
+            $name,
+            $subtitle->reference,
+            self::TRANSCRIPT_DERIVATION,
+            'metadata',
+            'text/plain',
+            $staged->sizeBytes,
+        );
+    }
+
+    private function subtitleResource(Item $item, string $captionLanguage): ?ItemResource
+    {
+        foreach ($item->resources as $resource) {
+            if ($resource->kind === 'subtitle' && ($captionLanguage === '' || str_contains(strtolower($resource->reference), strtolower($captionLanguage)))) {
+                return $resource;
+            }
+        }
+
+        return null;
+    }
+
     private function safeId(string $id): string
     {
         return trim((string) preg_replace('/[^A-Za-z0-9_-]+/', '_', $id), '_') ?: 'item';
     }
 
+    private function captionLanguage(PublishRequest $request): string
+    {
+        return trim(explode(',', $this->setting($request, 'caption_languages', 'en'))[0]);
+    }
 
     private function setting(PublishRequest $request, string $key, string $default): string
     {

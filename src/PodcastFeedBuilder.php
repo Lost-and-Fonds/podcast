@@ -17,6 +17,8 @@ final class PodcastFeedBuilder
 {
     private const AUDIO_DERIVATION = 'podcast-audio-v1';
 
+    private const TRANSCRIPT_DERIVATION = 'podcast-transcript-v1';
+
     private const PODCAST_NS = 'https://podcastindex.org/namespace/1.0';
 
     public function build(PublishRequest $request, PodcastFeedConfig $config, ProgressReporter $progress): string
@@ -69,9 +71,11 @@ final class PodcastFeedBuilder
         }
         $this->call($feed, 'setPodcastIndexMedium', [['value' => $config->mediaKind === 'video' ? 'video' : 'podcast']]);
 
-        if ($config->fundingUrl !== null) {
+        $fundingUrl = $config->fundingUrl ?? $this->fundingUrlFromItems($request);
+
+        if ($fundingUrl !== null) {
             $this->call($feed, 'addPodcastIndexFunding', [[
-                'url' => $config->fundingUrl->toString(),
+                'url' => $fundingUrl->toString(),
                 'title' => $config->fundingLabel,
             ]]);
         }
@@ -253,11 +257,30 @@ final class PodcastFeedBuilder
 
     private function transcript(Item $item, PodcastFeedConfig $config): ?ItemResource
     {
+        foreach ($item->resources as $resource) {
+            if ($resource->kind === 'metadata' && $resource->derivationKey === self::TRANSCRIPT_DERIVATION) {
+                return $resource;
+            }
+        }
+
         $language = $config->captionLanguages === [] ? '' : $config->captionLanguages[0];
 
         foreach ($item->resources as $resource) {
             if ($resource->kind === 'subtitle' && ($language === '' || str_contains(strtolower($resource->reference), strtolower($language)))) {
                 return $resource;
+            }
+        }
+
+        return null;
+    }
+
+    private function fundingUrlFromItems(PublishRequest $request): ?\Uri\Rfc3986\Uri
+    {
+        foreach ($request->items as $item) {
+            $url = PodcastFeedConfig::fundingUrlFromText($item->description);
+
+            if ($url !== null) {
+                return $url;
             }
         }
 

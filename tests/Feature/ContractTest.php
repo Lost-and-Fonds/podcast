@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Podcast\PodcastBroadcast;
+use Podcast\PodcastTranscriptFormatter;
 use Stashd\PluginSdk as Sdk;
 
 spl_autoload_register(static function (string $class): void {
@@ -126,11 +127,38 @@ it('preserves the Podcast provider contract', function (): void {
     podcastAssert((string) ((($parsed->xpath('/rss/channel/item/itunes:duration') ?: [])[0] ?? '')) === '1:02:03', 'duration was not formatted correctly');
     podcastAssert($publication->artifact->mediaType === 'application/rss+xml', 'feed media type changed');
 
+    $transcript = (new PodcastTranscriptFormatter())->format(<<<'VTT'
+WEBVTT
+
+1
+00:00:01.000 --> 00:00:03.000
+<v Speaker>Hello &amp; welcome.</v>
+
+NOTE internal cue
+not for listeners
+
+2
+00:00:04.000 --> 00:00:06.000
+Second line.
+VTT);
+    podcastAssert($transcript === "Hello & welcome.\n\nSecond line.\n", 'captions were not converted to a listener transcript');
+
+    $transcriptStaging = new PodcastStaging();
+    $transcriptItem = new Sdk\Item('episode-transcript', 'Transcript', [
+        new Sdk\ItemResource('audio.mp3', 'audio', url: 'https://media.test/audio.mp3', mediaType: 'audio/mpeg', sizeBytes: 12),
+        new Sdk\ItemResource('transcript.txt', 'metadata', 'podcast-transcript-v1', 'https://media.test/episode-transcript.txt', 'text/plain'),
+    ]);
+    $plugin->publish(new Sdk\PublishRequest('broadcast-transcript', [
+        new Sdk\Setting('title', Sdk\OptionValue::text('Transcript Podcast')),
+        new Sdk\Setting('captions', Sdk\OptionValue::text('creator_only')),
+    ], [], [$transcriptItem]), new Sdk\PluginContext(staging: $transcriptStaging));
+    podcastAssert(str_contains($transcriptStaging->files['feed.xml'] ?? '', 'url="https://media.test/episode-transcript.txt" type="text/plain"'), 'plain-text transcript was not preferred');
+
     $fallbackStaging = new PodcastStaging();
+    $fundingItem = new Sdk\Item('episode-funding', 'Funding', [new Sdk\ItemResource('audio.mp3', 'audio', url: 'https://media.test/audio.mp3', mediaType: 'audio/mpeg', sizeBytes: 12)], description: 'Support the show at https://patreon.com/example.');
     $fallbackPublication = $plugin->publish(new Sdk\PublishRequest('broadcast-funding-fallback', [
         new Sdk\Setting('title', Sdk\OptionValue::text('Fallback Funding Podcast')),
-        new Sdk\Setting('description', Sdk\OptionValue::text('Support the show at https://patreon.com/example.')),
-    ], [], [$item]), new Sdk\PluginContext(staging: $fallbackStaging));
+    ], [], [$fundingItem]), new Sdk\PluginContext(staging: $fallbackStaging));
     $fallback = simplexml_load_string($fallbackStaging->files['feed.xml'] ?? '');
     podcastAssert($fallback !== false, 'funding fallback feed XML is invalid');
     $fallback->registerXPathNamespace('podcast', 'https://podcastindex.org/namespace/1.0');
