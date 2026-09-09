@@ -8,6 +8,10 @@
   "api_version": "0.2",
   "entrypoint": "stashd-plugin/plugin.php",
   "helpers_lock": "stashd-plugin/helpers.lock.json",
+  "asset_requirements": [
+    {"role": "primary", "required": true},
+    {"role": "captions", "kind": "subtitle", "required": false, "when": {"setting": "captions", "not_equals": "off"}}
+  ],
   "supported_file_kinds": ["audio", "video"],
   "output_path": "feed.xml",
   "output_media_type": "application/rss+xml",
