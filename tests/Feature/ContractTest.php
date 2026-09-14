@@ -9,7 +9,7 @@ use Stashd\PluginSdk as Sdk;
 spl_autoload_register(static function (string $class): void {
     foreach ([
         'Podcast\\' => dirname(__DIR__, 2) . '/src/',
-        'Stashd\\PluginSdk\\' => dirname(__DIR__, 3) . '/plugin-sdk/src/',
+        'Stashd\\PluginSdk\\' => dirname(__DIR__, 4) . '/stashd-php-sdk/src/',
     ] as $prefix => $root) {
         if (str_starts_with($class, $prefix)) {
             $path = $root . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
@@ -197,5 +197,17 @@ VTT);
     $complete->registerXPathNamespace('podcast', 'https://podcastindex.org/namespace/1.0');
     podcastAssert((string) (($complete->xpath('/rss/channel/podcast:medium') ?: [])[0] ?? '') === 'video', 'video medium is missing');
     podcastAssert($completePublication->artifact->mediaType === 'application/rss+xml', 'completed video feed publication failed');
+
+    $opml = (new \Podcast\PodcastOpmlExporter())->export(new Sdk\StashCollection([
+        new Sdk\StashCollectionEntry('Example & stash', 'podcast', 'Podcast', 'https://example.test/feed?x=1&y=2'),
+        new Sdk\StashCollectionEntry('No feed', 'plex', 'Media server', 'https://example.test/library'),
+        new Sdk\StashCollectionEntry('Second <stash>', 'podcast', 'Podcast 2', 'https://example.test/second.xml'),
+    ]), new Sdk\PluginContext());
+    podcastAssert($opml->filename === 'stashd-podcasts.opml' && $opml->contentType === 'text/x-opml', 'OPML download metadata changed');
+    $opmlDocument = simplexml_load_string($opml->contents);
+    podcastAssert($opmlDocument !== false, 'OPML is not well formed');
+    podcastAssert(count($opmlDocument->body->outline) === 2, 'non-podcast collection entries were not omitted');
+    podcastAssert((string) $opmlDocument->body->outline[0]['xmlUrl'] === 'https://example.test/feed?x=1&y=2', 'canonical feed URL changed');
+    podcastAssert((string) $opmlDocument->body->outline[0]['text'] === 'Example & stash', 'OPML title escaping changed');
     expect(true)->toBeTrue();
 });

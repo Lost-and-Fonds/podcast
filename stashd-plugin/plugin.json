@@ -15,6 +15,7 @@
   "supported_file_kinds": ["audio", "video"],
   "output_path": "feed.xml",
   "output_media_type": "application/rss+xml",
+  "collection_exporters": [{"key": "podcast-opml", "label": "Podcast subscriptions (OPML)"}],
   "supports_item_rebuild": true,
   "prunes_after_publish": false,
   "helpers": {"ffmpeg": {"executable": "stashd-plugin/helpers/ffmpeg", "network": false}},
