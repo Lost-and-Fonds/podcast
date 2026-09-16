@@ -71,6 +71,8 @@ it('preserves the Podcast provider contract', function (): void {
         {
             $this->events[] = ['stage' => $stage, 'fraction' => $fraction];
         }
+
+        public function discovered(Sdk\DiscoveredItem $item): void {}
     }
 
     $plugin = new PodcastBroadcast();

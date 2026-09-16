@@ -5,7 +5,7 @@
   "license": "MIT",
   "require": {
     "php": "^8.5",
-    "stashd/php-sdk": "^0.3",
+    "stashd/php-sdk": "dev-main#c3d4f844e0ee210ef272738f8ef3d6e13a401951",
     "laminas/laminas-feed": "^2.26"
   },
   "require-dev": {"pestphp/pest": "^4.0", "phpstan/phpstan": "^2.2", "friendsofphp/php-cs-fixer": "^3.95", "squizlabs/php_codesniffer": "^4.0"},
