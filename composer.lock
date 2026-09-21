@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "645bbb25637a3bf71732ff43799c2ab6",
+    "content-hash": "0595ca509cffa5402221f64048b2ad69",
     "packages": [
         {
             "name": "laminas/laminas-escaper",
@@ -209,16 +209,16 @@
         },
         {
             "name": "stashd/php-sdk",
-            "version": "dev-main",
+            "version": "0.3.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Lost-and-Fonds/stashd-php-sdk.git",
-                "reference": "e5ba307"
+                "reference": "e5ba307e09535ba4365e354d9c644a43b9e95792"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Lost-and-Fonds/stashd-php-sdk/zipball/e5ba307",
-                "reference": "e5ba307",
+                "url": "https://api.github.com/repos/Lost-and-Fonds/stashd-php-sdk/zipball/e5ba307e09535ba4365e354d9c644a43b9e95792",
+                "reference": "e5ba307e09535ba4365e354d9c644a43b9e95792",
                 "shasum": ""
             },
             "require": {
@@ -231,7 +231,6 @@
                 "phpstan/phpstan": "^2.2",
                 "squizlabs/php_codesniffer": "^4.0"
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -6123,9 +6122,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "stashd/php-sdk": 20
-    },
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
