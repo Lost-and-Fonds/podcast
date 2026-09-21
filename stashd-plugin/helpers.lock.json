@@ -2,12 +2,12 @@
   "schema": 1,
   "helpers": {
     "ffmpeg": {
-      "version": "N-126416-g9997fd0606",
+      "version": "N-126717-g150c4e9edf",
       "license": "GPL-3.0-or-later",
-      "source": "https://github.com/BtbN/FFmpeg-Builds/releases/tag/autobuild-2026-09-05-13-10",
+      "source": "https://github.com/BtbN/FFmpeg-Builds/releases/tag/autobuild-2026-09-20-13-11",
       "platforms": {
-        "linux-amd64": {"url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-05-13-10/ffmpeg-N-126416-g9997fd0606-linux64-gpl.tar.xz", "sha256": "13c82fe68c401eb3f3ae2e402beb480fdd384b4de7222ae368bdbab36e949ab6", "archive_binary": "ffmpeg-N-126416-g9997fd0606-linux64-gpl/bin/ffmpeg"},
-        "linux-arm64": {"url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-05-13-10/ffmpeg-N-126416-g9997fd0606-linuxarm64-gpl.tar.xz", "sha256": "7e19f83aa236a11d13d74b5531134dbc275661deab97f9d10ad79029c75ccd5d", "archive_binary": "ffmpeg-N-126416-g9997fd0606-linuxarm64-gpl/bin/ffmpeg"}
+        "linux-amd64": {"url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-20-13-11/ffmpeg-N-126717-g150c4e9edf-linux64-gpl.tar.xz", "sha256": "ae89029125072aba13a9b4abe21c4df2bef5055e93d14965ae2ba2768089cbaa", "archive_binary": "ffmpeg-N-126717-g150c4e9edf-linux64-gpl/bin/ffmpeg"},
+        "linux-arm64": {"url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-20-13-11/ffmpeg-N-126716-g3faf57342f-linuxarm64-gpl.tar.xz", "sha256": "31c683da0c043692565d33a70b035e0d697fd838d95072ace9b6eef819bd5092", "archive_binary": "ffmpeg-N-126716-g3faf57342f-linuxarm64-gpl/bin/ffmpeg"}
       }
     }
   }
