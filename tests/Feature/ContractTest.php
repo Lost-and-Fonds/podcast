@@ -102,7 +102,7 @@ it('preserves the Podcast provider contract', function (): void {
     podcastAssert(in_array('/staging/derived-episode-1.mp3', $helper->arguments, true), 'helper output was not staged');
     podcastAssert($progress->events[0]['fraction'] === 0.0 && $progress->events[1]['fraction'] === 0.5, 'item progress was not reported');
 
-    $publishedItem = new Sdk\Item('episode-1', 'A <title>', [$video, $image, new Sdk\ItemResource('derived-episode-1.mp3', 'audio', 'podcast-audio-v1', 'https://media.test/episode-1.mp3', 'audio/mpeg', 42), new Sdk\ItemResource('captions-en.vtt', 'subtitle', url: 'https://media.test/episode-1.vtt', mediaType: 'text/vtt')], description: 'A description with ]]> safely embedded', publishedAt: '2026-08-23T12:34:56+00:00', durationSeconds: 3723);
+    $publishedItem = new Sdk\Item('episode-1', 'A <title>', [$video, $image, new Sdk\ItemResource('derived-episode-1.mp3', 'audio', 'podcast-audio-v1', 'https://media.test/episode-1.mp3', 'audio/mpeg', 42), new Sdk\ItemResource('resource-opaque.vtt', 'subtitle', url: 'https://media.test/episode-1.vtt', mediaType: 'text/vtt', language: 'en')], description: 'A description with ]]> safely embedded', publishedAt: '2026-08-23T12:34:56+00:00', durationSeconds: 3723);
     $publication = $plugin->publish(new Sdk\PublishRequest('broadcast-1', $request->settings, [], [$publishedItem]), $context);
     $xml = $staging->files['feed.xml'] ?? '';
     $parsed = simplexml_load_string($xml);

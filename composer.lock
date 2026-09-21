@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "76aa45c5439e85db1fa836bc583cda3c",
+    "content-hash": "645bbb25637a3bf71732ff43799c2ab6",
     "packages": [
         {
             "name": "laminas/laminas-escaper",
@@ -213,12 +213,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Lost-and-Fonds/stashd-php-sdk.git",
-                "reference": "c3d4f844e0ee210ef272738f8ef3d6e13a401951"
+                "reference": "e5ba307"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Lost-and-Fonds/stashd-php-sdk/zipball/c3d4f844e0ee210ef272738f8ef3d6e13a401951",
-                "reference": "c3d4f844e0ee210ef272738f8ef3d6e13a401951",
+                "url": "https://api.github.com/repos/Lost-and-Fonds/stashd-php-sdk/zipball/e5ba307",
+                "reference": "e5ba307",
                 "shasum": ""
             },
             "require": {
@@ -258,10 +258,10 @@
             ],
             "description": "PHP authoring SDK for Stashd plugins",
             "support": {
-                "source": "https://github.com/Lost-and-Fonds/stashd-php-sdk/tree/main",
+                "source": "https://github.com/Lost-and-Fonds/stashd-php-sdk/tree/v0.3.4",
                 "issues": "https://github.com/Lost-and-Fonds/stashd-php-sdk/issues"
             },
-            "time": "2026-09-15T23:37:23+00:00"
+            "time": "2026-09-21T05:35:28+00:00"
         },
         {
             "name": "stashd/plugin-api",

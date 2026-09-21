@@ -266,7 +266,7 @@ final class PodcastFeedBuilder
         $language = $config->captionLanguages === [] ? '' : $config->captionLanguages[0];
 
         foreach ($item->resources as $resource) {
-            if ($resource->kind === 'subtitle' && ($language === '' || str_contains(strtolower($resource->reference), strtolower($language)))) {
+            if ($resource->kind === 'subtitle' && ($language === '' || ($resource->language !== null ? strcasecmp($resource->language, $language) === 0 : str_contains(strtolower($resource->reference), strtolower($language))))) {
                 return $resource;
             }
         }

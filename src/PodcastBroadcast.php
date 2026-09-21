@@ -175,7 +175,7 @@ final class PodcastBroadcast implements BroadcastPlugin
     private function subtitleResource(Item $item, string $captionLanguage): ?ItemResource
     {
         foreach ($item->resources as $resource) {
-            if ($resource->kind === 'subtitle' && ($captionLanguage === '' || str_contains(strtolower($resource->reference), strtolower($captionLanguage)))) {
+            if ($resource->kind === 'subtitle' && ($captionLanguage === '' || ($resource->language !== null ? strcasecmp($resource->language, $captionLanguage) === 0 : str_contains(strtolower($resource->reference), strtolower($captionLanguage))))) {
                 return $resource;
             }
         }
