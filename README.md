@@ -13,9 +13,8 @@ fallback.
 Production installation uses Stashd's OCI installer (`stashd:plugin-install
 ghcr.io/lost-and-fonds/podcast:<version>`). Composer is for local development
 only. The package requires PHP 8.5, `stashd/php-sdk`, and FFmpeg available to
-the plugin runtime through the declared helper. Run `composer test` for local
-provider tests. The core application owns persistence, publication, activation,
-and lifecycle orchestration.
+the plugin runtime through the declared helper. The core application owns
+persistence, publication, activation, and lifecycle orchestration.
 
 ## Release artifact
 
